@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circle Conquest: Roblox Geometry Arena</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+    <!-- KaTeX CSS & JS for Math Rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        roblox: ['Fredoka', 'sans-serif'],
+                        tech: ['Share Tech Mono', 'monospace'],
+                    },
+                    colors: {
+                        robloxBlue: '#00a2ff',
+                        robloxDark: '#0f172a',
+                        neonCyan: '#00ffcc',
+                        neonPink: '#ff007f',
+                        neonYellow: '#fbbf24',
+                    },
+                    boxShadow: {
+                        'glow-cyan': '0 0 20px rgba(0, 255, 204, 0.4)',
+                        'glow-pink': '0 0 20px rgba(255, 0, 127, 0.4)',
+                        'glow-blue': '0 0 20px rgba(0, 162, 255, 0.4)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #090d16;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(0, 162, 255, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(255, 0, 127, 0.12) 0%, transparent 40%);
+            background-attachment: fixed;
+            user-select: none;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-roblox {
+            transition: all 0.15s ease-out;
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.4);
+        }
+        .btn-roblox:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00a2ff; }
+    </style>
+</head>
+<body class="text-slate-100 font-sans min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+    <!-- HEADER & PLAYER STATS BAR -->
+    <header class="w-full glass-panel sticky top-0 z-40 border-b border-slate-800 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-3">
+            <!-- Brand Logo -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-glow-cyan">
+                    <i class="fa-solid fa-shapes text-xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="font-roblox font-bold text-lg md:text-xl text-white tracking-wide flex items-center gap-2">
+                        CIRCLE CONQUEST <span class="bg-cyan-500/20 text-cyan-400 text-xs px-2 py-0.5 rounded-full border border-cyan-500/30">ROBLOX EDITION</span>
+                    </h1>
+                    <p class="text-xs text-slate-400 font-tech">Geometri Lingkaran Interaktif & Catur Taktis</p>
+                </div>
+            </div>
+
+            <!-- Player Status Dashboard -->
+            <div class="flex items-center gap-4 bg-slate-900/90 px-4 py-2 rounded-2xl border border-slate-700/80">
+                <!-- Level & XP -->
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center font-tech font-bold text-amber-400 text-sm">
+                        L<span id="player-level">1</span>
+                    </div>
+                    <div class="w-24 bg-slate-800 rounded-full h-2.5 overflow-hidden border border-slate-700">
+                        <div id="player-xp-bar" class="bg-gradient-to-r from-amber-400 to-yellow-500 h-full w-[25%] transition-all duration-300"></div>
+                    </div>
+                </div>
+
+                <!-- Coins -->
+                <div class="flex items-center gap-1.5 font-tech font-bold text-amber-300">
+                    <i class="fa-solid fa-coins text-amber-400"></i>
+                    <span id="player-coins">150</span>
+                </div>
+
+                <!-- Highscore -->
+                <div class="flex items-center gap-1.5 font-tech font-bold text-cyan-400">
+                    <i class="fa-solid fa-trophy text-amber-400"></i>
+                    <span id="player-highscore">0</span>
+                </div>
+
+                <!-- Audio Toggle -->
+                <button onclick="AudioSynth.play('click')" id="audio-toggle-btn" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition">
+                    <i class="fa-solid fa-volume-high"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- NAVIGATION TABS MODE -->
+    <div class="max-w-7xl mx-auto w-full px-4 pt-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800">
+            <button id="tab-btn-lab" onclick="switchTab('lab')" class="nav-tab-btn btn-roblox bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-roblox font-bold py-2.5 px-3 rounded-xl border border-cyan-400/40 flex items-center justify-center gap-2 text-sm">
+                <i class="fa-solid fa-calculator"></i> 📚 Lab & Rumus
+            </button>
+            <button id="tab-btn-chess" onclick="switchTab('chess')" class="nav-tab-btn btn-roblox bg-slate-800 text-slate-300 hover:text-white font-roblox font-bold py-2.5 px-3 rounded-xl border border-slate-700 flex items-center justify-center gap-2 text-sm">
+                <i class="fa-solid fa-chess-board"></i> ♟️ Catur 6x6
+            </button>
+            <button id="tab-btn-speed" onclick="switchTab('speed')" class="nav-tab-btn btn-roblox bg-slate-800 text-slate-300 hover:text-white font-roblox font-bold py-2.5 px-3 rounded-xl border border-slate-700 flex items-center justify-center gap-2 text-sm">
+                <i class="fa-solid fa-bolt text-yellow-400"></i> ⚡ Speed Rush
+            </button>
+            <button id="tab-btn-shop" onclick="switchTab('shop')" class="nav-tab-btn btn-roblox bg-slate-800 text-slate-300 hover:text-white font-roblox font-bold py-2.5 px-3 rounded-xl border border-slate-700 flex items-center justify-center gap-2 text-sm">
+                <i class="fa-solid fa-store text-emerald-400"></i> 🛒 Toko Skin
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="max-w-7xl mx-auto w-full px-4 py-4 flex-grow">
+
+        <!-- =================================================================== -->
+        <!-- TAB 1: PUSAT RUMUS & LAB VISUALIZER -->
+        <!-- =================================================================== -->
+        <section id="mode-lab" class="tab-content space-y-4">
+            
+            <!-- FORMULA CHEAT SHEET CARDS -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-cyan-400 space-y-1">
+                    <span class="text-xs font-tech text-cyan-400 uppercase font-bold tracking-wider">DIAMETER (d)</span>
+                    <div class="text-base font-bold text-white"><i>d</i> = 2 &times; <i>r</i></div>
+                    <p class="text-xs text-slate-400">Garis lurus melintasi titik pusat lingkaran.</p>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-teal-400 space-y-1">
+                    <span class="text-xs font-tech text-teal-400 uppercase font-bold tracking-wider">JARI-JARI (r)</span>
+                    <div class="text-base font-bold text-white"><i>r</i> = &frac12; &times; <i>d</i> = &radic;(<i>L</i> / &pi;)</div>
+                    <p class="text-xs text-slate-400">Jarak pusat ke tepi lingkaran.</p>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-amber-400 space-y-1">
+                    <span class="text-xs font-tech text-amber-400 uppercase font-bold tracking-wider">KELILING (K)</span>
+                    <div class="text-base font-bold text-white"><i>K</i> = 2 &times; &pi; &times; <i>r</i> = &pi; &times; <i>d</i></div>
+                    <p class="text-xs text-slate-400">Panjang garis tepi keliling lingkaran.</p>
+                </div>
+                <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-pink-400 space-y-1">
+                    <span class="text-xs font-tech text-pink-400 uppercase font-bold tracking-wider">LUAS (L)</span>
+                    <div class="text-base font-bold text-white"><i>L</i> = &pi; &times; <i>r</i>&sup2;</div>
+                    <p class="text-xs text-slate-400">Total area permukaan dalam lingkaran.</p>
+                </div>
+            </div>
+
+            <!-- INTERACTIVE VISUALIZER & CALCULATOR WORKBENCH -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                
+                <!-- Left: Canvas Visualizer (7 Cols) -->
+                <div class="lg:col-span-7 glass-panel rounded-3xl p-5 border border-slate-800 flex flex-col justify-between space-y-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="font-roblox font-bold text-lg text-white flex items-center gap-2">
+                                <i class="fa-solid fa-eye text-cyan-400"></i> Visualisator Geometri Lingkaran
+                            </h3>
+                            <p class="text-xs text-slate-400">Bentuk geometri diperbarui secara otomatis berdasarkan input nilai.</p>
+                        </div>
+                        <div class="flex gap-1.5">
+                            <button id="btn-toggle-r" onclick="toggleLabView('radius')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-teal-600 text-white border border-teal-400">Radius</button>
+                            <button id="btn-toggle-d" onclick="toggleLabView('diameter')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">Diameter</button>
+                            <button id="btn-toggle-a" onclick="toggleLabView('area')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">Luas Arsir</button>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Canvas Box -->
+                    <div class="w-full h-72 md:h-80 bg-slate-950/90 rounded-2xl border border-slate-800 relative overflow-hidden flex items-center justify-center p-2 shadow-inner">
+                        <canvas id="lab-canvas" class="block w-full h-full"></canvas>
+                        
+                        <!-- Overlay Legend Badges -->
+                        <div class="absolute bottom-3 left-3 bg-slate-900/90 backdrop-blur px-3 py-1.5 rounded-xl border border-slate-700 text-xs flex gap-3 font-tech">
+                            <span class="text-teal-400">r: <b id="lab-radius-val">7 cm</b></span>
+                            <span class="text-cyan-400">d: <b id="lab-diameter-val">14 cm</b></span>
+                            <span class="text-amber-400"><b id="lab-pi-badge">&pi; = 22/7</b></span>
+                        </div>
+                    </div>
+
+                    <!-- Slider Input Radius -->
+                    <div class="space-y-2 bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+                        <div class="flex justify-between items-center text-xs font-bold">
+                            <span class="text-slate-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-sliders text-cyan-400"></i> Geser Nilai Jari-Jari (<i>r</i>):
+                            </span>
+                            <span class="text-cyan-400 font-tech text-sm">1 cm s.d 42 cm</span>
+                        </div>
+                        <input id="lab-radius-slider" type="range" min="1" max="42" value="7" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+                    </div>
+                </div>
+
+                <!-- Right: Step-by-Step Calculator (5 Cols) -->
+                <div class="lg:col-span-5 glass-panel rounded-3xl p-5 border border-slate-800 space-y-4 flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-roblox font-bold text-lg text-white flex items-center gap-2 mb-1">
+                            <i class="fa-solid fa-square-root-variable text-pink-400"></i> Kalkulator Step-by-Step
+                        </h3>
+                        <p class="text-xs text-slate-400 mb-3">Langkah penjabaran matematika resmi lingkaran.</p>
+
+                        <!-- Custom Dual Inputs -->
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                            <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-700 space-y-1">
+                                <label class="text-[11px] text-slate-400 block font-bold">Input Jari-Jari (<i>r</i>):</label>
+                                <input id="custom-r-input" type="number" value="7" min="1" max="42" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-sm font-tech text-teal-300 font-bold focus:outline-none focus:border-teal-400">
+                            </div>
+                            <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-700 space-y-1">
+                                <label class="text-[11px] text-slate-400 block font-bold">Input Luas (<i>L</i>):</label>
+                                <input id="custom-l-input" type="number" placeholder="154" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-sm font-tech text-pink-300 font-bold focus:outline-none focus:border-pink-400">
+                            </div>
+                        </div>
+
+                        <!-- Mathematical Steps Cards -->
+                        <div class="space-y-2.5 text-xs font-mono">
+                            <div class="bg-slate-950/90 p-3 rounded-2xl border border-slate-800 space-y-1">
+                                <div class="text-pink-400 font-bold font-tech flex items-center justify-between border-b border-slate-800 pb-1">
+                                    <span>PENJABARAN LUAS (L)</span>
+                                    <span><i>L</i> = &pi; &times; <i>r</i>&sup2;</span>
+                                </div>
+                                <div id="calc-step-area" class="text-slate-200 leading-relaxed pt-1"></div>
+                            </div>
+
+                            <div class="bg-slate-950/90 p-3 rounded-2xl border border-slate-800 space-y-1">
+                                <div class="text-amber-400 font-bold font-tech flex items-center justify-between border-b border-slate-800 pb-1">
+                                    <span>PENJABARAN KELILING (K)</span>
+                                    <span><i>K</i> = 2 &times; &pi; &times; <i>r</i></span>
+                                </div>
+                                <div id="calc-step-circ" class="text-slate-200 leading-relaxed pt-1"></div>
+                            </div>
+
+                            <div class="bg-slate-950/90 p-3 rounded-2xl border border-slate-800 space-y-1">
+                                <div class="text-teal-400 font-bold font-tech flex items-center justify-between border-b border-slate-800 pb-1">
+                                    <span>MENCARI JARI-JARI DARI LUAS</span>
+                                    <span><i>r</i> = &radic;(<i>L</i> / &pi;)</span>
+                                </div>
+                                <div id="calc-step-inverse" class="text-slate-200 leading-relaxed pt-1"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="triggerMathQuiz()" class="w-full btn-roblox bg-gradient-to-r from-pink-600 to-rose-600 text-white font-roblox font-bold py-3 rounded-xl border border-pink-400/40 flex items-center justify-center gap-2 text-sm shadow-glow-pink">
+                        <i class="fa-solid fa-graduation-cap"></i> Uji Pemahaman Soal Acak
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- TAB 2: CATUR GEOMETRI 6X6 (VS BOT AI) -->
+        <!-- =================================================================== -->
+        <section id="mode-chess" class="tab-content hidden space-y-4">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                
+                <!-- Left: 6x6 Chessboard (7 Cols) -->
+                <div class="lg:col-span-7 glass-panel rounded-3xl p-5 border border-slate-800 flex flex-col items-center justify-between space-y-4">
+                    <div class="w-full flex justify-between items-center">
+                        <div>
+                            <h3 class="font-roblox font-bold text-lg text-white flex items-center gap-2">
+                                <i class="fa-solid fa-chess-king text-cyan-400"></i> Roblox Geometry Chess 6x6
+                            </h3>
+                            <p class="text-xs text-slate-400">Pilih bidak Anda & target petak. Jawab soal matematika untuk menyerang!</p>
+                        </div>
+                        <button onclick="ChessGame.reset()" class="btn-roblox bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold py-2 px-3 rounded-xl border border-slate-700">
+                            <i class="fa-solid fa-rotate-right"></i> Reset Board
+                        </button>
+                    </div>
+
+                    <!-- Status Banner -->
+                    <div id="chess-status-banner" class="w-full bg-slate-900/90 border border-slate-800 px-4 py-2.5 rounded-2xl flex justify-between items-center text-xs font-tech">
+                        <span class="text-cyan-300 font-bold flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                            GILIRAN PEMAIN (BIRU NEON)
+                        </span>
+                        <span id="chess-selected-info" class="text-slate-400">Pilih bidak biru untuk melangkah</span>
+                    </div>
+
+                    <!-- Chessboard Grid -->
+                    <div class="w-full max-w-[420px] aspect-square bg-slate-950 rounded-2xl p-2 border-2 border-slate-800 shadow-2xl relative">
+                        <div id="chess-board" class="w-full h-full grid grid-cols-6 grid-rows-6 gap-1 rounded-xl overflow-hidden">
+                            <!-- Rendered dynamically by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Rules & Piece Guide (5 Cols) -->
+                <div class="lg:col-span-5 glass-panel rounded-3xl p-5 border border-slate-800 space-y-4 flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-roblox font-bold text-lg text-white flex items-center gap-2 mb-2">
+                            <i class="fa-solid fa-book-bookmark text-amber-400"></i> Panduan Bidak & Jalur Catur
+                        </h3>
+                        <p class="text-xs text-slate-400 mb-3">Setiap bidak mengikuti aturan catur resmi dan **TIDAK BISA** melompati bidak di depannya jika jalurnya terhalang (kecuali Cyber Knight).</p>
+
+                        <div class="space-y-2 text-xs">
+                            <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-cyan-950 border border-cyan-500/40 flex items-center justify-center text-cyan-400 text-lg">♟</div>
+                                <div>
+                                    <div class="font-bold text-white font-roblox">Prajurit (Pawn)</div>
+                                    <div class="text-slate-400 text-[11px]">Maju 1 langkah lurus jika kosong, atau makan 1 langkah serong.</div>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-cyan-950 border border-cyan-500/40 flex items-center justify-center text-cyan-400 text-lg">♞</div>
+                                <div>
+                                    <div class="font-bold text-white font-roblox">Cyber Knight (Kuda)</div>
+                                    <div class="text-slate-400 text-[11px]">Langkah pola 'L'. Satu-satunya bidak yang bisa melompati bidak lain.</div>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-cyan-950 border border-cyan-500/40 flex items-center justify-center text-cyan-400 text-lg">♝</div>
+                                <div>
+                                    <div class="font-bold text-white font-roblox">Neon Wizard (Gajah)</div>
+                                    <div class="text-slate-400 text-[11px]">Bergerak diagonal. Jalur melintas harus bersih tanpa halangan.</div>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-cyan-950 border border-cyan-500/40 flex items-center justify-center text-cyan-400 text-lg">♜</div>
+                                <div>
+                                    <div class="font-bold text-white font-roblox">Titan Golem (Benteng)</div>
+                                    <div class="text-slate-400 text-[11px]">Bergerak lurus vertikal/horizontal. Jalur melintas harus bersih.</div>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-amber-950 border border-amber-500/40 flex items-center justify-center text-amber-400 text-lg">♚</div>
+                                <div>
+                                    <div class="font-bold text-white font-roblox">Sovereign (Raja)</div>
+                                    <div class="text-slate-400 text-[11px]">Bergerak 1 langkah ke segala arah. Bidak utama kemenangan!</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- TAB 3: ROBLOX SPEED RUSH ARCADE -->
+        <!-- =================================================================== -->
+        <section id="mode-speed" class="tab-content hidden space-y-4">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                
+                <!-- Left: Dynamic Circle Canvas Arena (7 Cols) -->
+                <div class="lg:col-span-7 glass-panel rounded-3xl p-5 border border-slate-800 flex flex-col justify-between space-y-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="font-roblox font-bold text-lg text-white flex items-center gap-2">
+                                <i class="fa-solid fa-bolt text-yellow-400"></i> Roblox Speed Rush Arena
+                            </h3>
+                            <p class="text-xs text-slate-400">Jawab soal sebelum energi lingkaran mengembang penuh dan meledak!</p>
+                        </div>
+
+                        <!-- Score & Hearts Bar -->
+                        <div class="flex items-center gap-3 bg-slate-900/90 px-3 py-1.5 rounded-2xl border border-slate-700">
+                            <span class="text-xs text-slate-400 font-bold">NYAWA:</span>
+                            <span id="speed-hearts" class="text-base tracking-widest">❤️ ❤️ ❤️</span>
+                            <span class="text-xs text-slate-400 font-bold ml-2">SKOR:</span>
+                            <span id="speed-score" class="text-sm font-tech font-bold text-yellow-400">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Expanding Canvas -->
+                    <div class="w-full h-72 md:h-80 bg-slate-950/90 rounded-2xl border border-slate-800 relative overflow-hidden flex items-center justify-center p-2 shadow-inner">
+                        <canvas id="speed-canvas" class="block w-full h-full"></canvas>
+                    </div>
+                </div>
+
+                <!-- Right: Question & Choices Panel (5 Cols) -->
+                <div class="lg:col-span-5 glass-panel rounded-3xl p-5 border border-slate-800 space-y-4 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-tech font-bold uppercase text-yellow-400 bg-yellow-950/50 px-2.5 py-1 rounded-xl border border-yellow-500/30">
+                                ⚡ TANTANGAN CEPAT
+                            </span>
+                            <span class="text-xs text-slate-400 font-tech">Exp Rate: <b>0.05 px/f</b></span>
+                        </div>
+
+                        <div id="speed-question-text" class="text-sm font-semibold text-slate-100 leading-relaxed bg-slate-950/90 p-4 rounded-2xl border border-slate-800 mb-4">
+                            Tentukan Luas atau Jari-jari lingkaran yang ditampilkan di atas!
+                        </div>
+
+                        <div id="speed-options-grid" class="grid grid-cols-2 gap-2.5">
+                            <!-- Options rendered dynamically -->
+                        </div>
+                    </div>
+
+                    <button onclick="startSpeedRush()" class="w-full btn-roblox bg-gradient-to-r from-yellow-500 to-amber-600 text-slate-950 font-roblox font-bold py-3 rounded-xl border border-yellow-300 flex items-center justify-center gap-2 text-sm shadow-glow-yellow">
+                        <i class="fa-solid fa-play"></i> Mulai Ulang Speed Rush
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- TAB 4: TOKO ROBLOX SKIN -->
+        <!-- =================================================================== -->
+        <section id="mode-shop" class="tab-content hidden space-y-4">
+            <div class="glass-panel rounded-3xl p-6 border border-slate-800 space-y-6">
+                <div>
+                    <h3 class="font-roblox font-bold text-xl text-white flex items-center gap-2">
+                        <i class="fa-solid fa-store text-emerald-400"></i> Toko Skin & Kustomisasi Roblox
+                    </h3>
+                    <p class="text-xs text-slate-400">Gunakan koin hasil kuis matematika untuk membeli skin avatar dan efek khusus.</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <!-- Skin Item 1 -->
+                    <div class="bg-slate-900/90 rounded-2xl p-4 border border-slate-800 flex flex-col justify-between space-y-3">
+                        <div class="w-full h-32 bg-slate-950 rounded-xl border border-cyan-500/30 flex items-center justify-center text-4xl text-cyan-400 shadow-glow-cyan">
+                            👑
+                        </div>
+                        <div>
+                            <div class="font-roblox font-bold text-sm text-white">Mahkota Cyber Neon</div>
+                            <div class="text-xs text-slate-400">Aura avatar berkedip cyan.</div>
+                        </div>
+                        <button onclick="buyShopItem('Mahkota Cyber Neon', 100)" class="w-full btn-roblox bg-cyan-600 hover:bg-cyan-500 text-white font-tech font-bold py-2 rounded-xl text-xs flex justify-center items-center gap-1">
+                            <i class="fa-solid fa-coins text-amber-400"></i> 100 Koin
+                        </button>
+                    </div>
+
+                    <!-- Skin Item 2 -->
+                    <div class="bg-slate-900/90 rounded-2xl p-4 border border-slate-800 flex flex-col justify-between space-y-3">
+                        <div class="w-full h-32 bg-slate-950 rounded-xl border border-pink-500/30 flex items-center justify-center text-4xl text-pink-400 shadow-glow-pink">
+                            🧙‍♂️
+                        </div>
+                        <div>
+                            <div class="font-roblox font-bold text-sm text-white">Penyihir Geometri</div>
+                            <div class="text-xs text-slate-400">Skin Neon Wizard versi Emas.</div>
+                        </div>
+                        <button onclick="buyShopItem('Penyihir Geometri', 200)" class="w-full btn-roblox bg-pink-600 hover:bg-pink-500 text-white font-tech font-bold py-2 rounded-xl text-xs flex justify-center items-center gap-1">
+                            <i class="fa-solid fa-coins text-amber-400"></i> 200 Koin
+                        </button>
+                    </div>
+
+                    <!-- Skin Item 3 -->
+                    <div class="bg-slate-900/90 rounded-2xl p-4 border border-slate-800 flex flex-col justify-between space-y-3">
+                        <div class="w-full h-32 bg-slate-950 rounded-xl border border-amber-500/30 flex items-center justify-center text-4xl text-amber-400">
+                            🛡️
+                        </div>
+                        <div>
+                            <div class="font-roblox font-bold text-sm text-white">Perisai Titan Roblox</div>
+                            <div class="text-xs text-slate-400">Papan catur bertema Mecha.</div>
+                        </div>
+                        <button onclick="buyShopItem('Perisai Titan Roblox', 300)" class="w-full btn-roblox bg-amber-600 hover:bg-amber-500 text-white font-tech font-bold py-2 rounded-xl text-xs flex justify-center items-center gap-1">
+                            <i class="fa-solid fa-coins text-amber-400"></i> 300 Koin
+                        </button>
+                    </div>
+
+                    <!-- Skin Item 4 -->
+                    <div class="bg-slate-900/90 rounded-2xl p-4 border border-slate-800 flex flex-col justify-between space-y-3">
+                        <div class="w-full h-32 bg-slate-950 rounded-xl border border-emerald-500/30 flex items-center justify-center text-4xl text-emerald-400">
+                            ⚡
+                        </div>
+                        <div>
+                            <div class="font-roblox font-bold text-sm text-white">Orb Pelangi Cyber</div>
+                            <div class="text-xs text-slate-400">Efek bola Speed Rush warna-warni.</div>
+                        </div>
+                        <button onclick="buyShopItem('Orb Pelangi Cyber', 400)" class="w-full btn-roblox bg-emerald-600 hover:bg-emerald-500 text-white font-tech font-bold py-2 rounded-xl text-xs flex justify-center items-center gap-1">
+                            <i class="fa-solid fa-coins text-amber-400"></i> 400 Koin
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MATH QUIZ MODAL WITH VISUAL DIAGRAM -->
+    <div id="math-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-panel w-full max-w-lg rounded-3xl p-6 border border-cyan-500/40 shadow-glow-cyan relative space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                <div class="flex items-center gap-2">
+                    <span id="modal-diff-badge" class="px-2.5 py-0.5 rounded-lg text-xs font-tech font-bold uppercase bg-emerald-950 text-emerald-300 border border-emerald-500/40">🟢 MUDAH</span>
+                    <span id="modal-reward-badge" class="text-xs font-bold text-amber-400 bg-amber-950 px-2 py-0.5 rounded-md border border-amber-500/30 font-tech">+15 XP</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-clock text-amber-400 text-sm"></i>
+                    <span id="modal-timer" class="font-tech font-bold text-amber-400 text-lg">30</span>s
+                </div>
+            </div>
+
+            <!-- Quiz Visual Diagram Canvas -->
+            <div class="w-full flex justify-center">
+                <div class="w-48 h-48 bg-slate-950/90 rounded-2xl border border-slate-700 p-1 relative flex items-center justify-center shadow-inner">
+                    <canvas id="quiz-diagram-canvas" width="180" height="180" class="block w-full h-full"></canvas>
+                </div>
+            </div>
+
+            <!-- Question Text -->
+            <div id="modal-question-text" class="text-sm font-semibold text-slate-100 leading-relaxed bg-slate-900/90 p-3.5 rounded-2xl border border-slate-700/80">
+                <!-- Rendered dynamically -->
+            </div>
+
+            <!-- Hint Section -->
+            <div id="modal-hint-box" class="hidden bg-amber-950/40 border border-amber-500/40 p-3 rounded-2xl text-xs text-amber-200">
+                <i class="fa-solid fa-lightbulb text-amber-400 mr-1"></i>
+                <span id="modal-hint-text"></span>
+            </div>
+
+            <!-- Options Grid -->
+            <div id="modal-options-grid" class="grid grid-cols-2 gap-2.5 pt-1">
+                <!-- Options rendered dynamically -->
+            </div>
+
+            <!-- Hint Button -->
+            <div class="flex justify-end pt-1">
+                <button onclick="showMathHint()" class="text-xs text-amber-400 hover:text-amber-300 underline font-bold flex items-center gap-1">
+                    <i class="fa-solid fa-lightbulb"></i> Petunjuk Rumus
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SOLUTION MODAL -->
+    <div id="solution-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-panel w-full max-w-md rounded-3xl p-6 border border-teal-500/40 shadow-glow-cyan relative space-y-4">
+            <h3 class="font-tech font-bold text-lg text-teal-300 flex items-center gap-2 border-b border-slate-700 pb-2">
+                <i class="fa-solid fa-graduation-cap text-teal-400"></i> Pembahasan Langkah Demi Langkah
+            </h3>
+            <div id="solution-text" class="text-xs text-slate-200 space-y-2 leading-relaxed bg-slate-950/90 p-4 rounded-2xl border border-slate-700 font-mono">
+                <!-- Rendered dynamically -->
+            </div>
+            <button onclick="closeSolutionModal()" class="w-full btn-roblox bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-tech font-bold py-2.5 rounded-xl border border-teal-300">
+                Lanjutkan Permainan <i class="fa-solid fa-arrow-right ml-1"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- GAME TOAST NOTIFICATION CONTAINER -->
+    <div id="game-toast" class="fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl shadow-xl font-bold font-tech border transition-all transform duration-300 hidden opacity-0 translate-y-4">
+        <!-- Text populated dynamically -->
+    </div>
+
+    <script>
+        /* ==========================================================================
+           GLOBAL GAME STATE & AUDIO SYNTHESIZER
+           ========================================================================== */
+        let playerState = {
+            level: 1,
+            xp: 25,
+            xpMax: 100,
+            coins: 150,
+            highscore: 0,
+            soundEnabled: true
+        };
+
+        let currentQuiz = null;
+        let onQuizComplete = null;
+        let quizTimerInterval = null;
+        let labViewMode = 'radius';
+
+        // Web Audio Synthesizer
+        const AudioSynth = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+            },
+            play(type) {
+                if (!playerState.soundEnabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                if (type === 'click') {
+                    osc.frequency.setValueAtTime(440, now);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'correct') {
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.15);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.linearRampToValueAtTime(110, now + 0.2);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                }
+            }
+        };
+
+        /* ==========================================================================
+           TAB NAVIGATION ENGINE
+           ========================================================================== */
+        function switchTab(tabId) {
+            AudioSynth.play('click');
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+                btn.classList.remove('bg-gradient-to-r', 'from-cyan-600', 'to-blue-600', 'text-white', 'border-cyan-400/40');
+                btn.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-700');
+            });
+
+            const activeTab = document.getElementById(`mode-${tabId}`);
+            const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+
+            if (activeTab) activeTab.classList.remove('hidden');
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-slate-800', 'text-slate-300', 'border-slate-700');
+                activeBtn.classList.add('bg-gradient-to-r', 'from-cyan-600', 'to-blue-600', 'text-white', 'border-cyan-400/40');
+            }
+
+            if (tabId === 'lab') {
+                drawLabCanvas();
+                updateLabCalculations();
+            } else if (tabId === 'chess') {
+                ChessGame.init();
+            } else if (tabId === 'speed') {
+                startSpeedRush();
+            } else if (tabId !== 'speed') {
+                stopSpeedRush();
+            }
+        }
+
+        /* ==========================================================================
+           MATH ENGINE WITH CLEAN MATH NOTATION & DIAGRAM DRAWING
+           ========================================================================== */
+        const CircleMathEngine = {
+            generateQuestion(diffOverride = null) {
+                const difficulties = ['Mudah', 'Sedang', 'HOTS'];
+                const diff = diffOverride || difficulties[Math.floor(Math.random() * difficulties.length)];
+                
+                const useFractionPi = Math.random() < 0.6;
+                let r, d, piVal, piStr, text, hint, breakdown, correct, options = [];
+                let diagramType = 'radius';
+                let diagramParams = {};
+
+                if (useFractionPi) {
+                    r = (Math.floor(Math.random() * 4) + 1) * 7;
+                } else {
+                    r = Math.floor(Math.random() * 8) + 2;
+                }
+                d = r * 2;
+                piVal = useFractionPi ? (22 / 7) : 3.14;
+                piStr = useFractionPi ? "22/7" : "3.14";
+
+                if (diff === 'Mudah') {
+                    const subType = Math.floor(Math.random() * 3);
+                    if (subType === 0) {
+                        correct = d;
+                        text = `🟢 <b>[MUDAH]</b> Lingkaran memiliki jari-jari <i>r</i> = <b>${r} cm</b>. Berapakah <b>Diameter (<i>d</i>)</b> lingkaran tersebut?`;
+                        hint = `<i>d</i> = 2 &times; <i>r</i> = 2 &times; ${r}`;
+                        breakdown = `<b>Rumus:</b> <i>d</i> = 2 &times; <i>r</i><br><i>d</i> = 2 &times; ${r} = <b class="text-teal-400">${d} cm</b>`;
+                        diagramType = 'radius';
+                        diagramParams = { r };
+                    } else if (subType === 1) {
+                        const circVal = Math.round(2 * piVal * r * 100) / 100;
+                        correct = circVal;
+                        text = `🟢 <b>[MUDAH]</b> Berapakah <b>Keliling (<i>K</i>)</b> lingkaran dengan jari-jari <i>r</i> = <b>${r} cm</b>? (&pi; = ${piStr})`;
+                        hint = `<i>K</i> = 2 &times; &pi; &times; <i>r</i>`;
+                        breakdown = `<b>Rumus:</b> <i>K</i> = 2 &times; &pi; &times; <i>r</i><br><i>K</i> = 2 &times; ${piStr} &times; ${r}<br><b><i>K</i> = <span class="text-amber-400">${correct} cm</span></b>`;
+                        diagramType = 'radius';
+                        diagramParams = { r };
+                    } else {
+                        const areaVal = Math.round(piVal * r * r * 100) / 100;
+                        correct = areaVal;
+                        text = `🟢 <b>[MUDAH]</b> Berapakah <b>Luas (<i>L</i>)</b> lingkaran dengan jari-jari <i>r</i> = <b>${r} cm</b>? (&pi; = ${piStr})`;
+                        hint = `<i>L</i> = &pi; &times; <i>r</i>&sup2;`;
+                        breakdown = `<b>Rumus:</b> <i>L</i> = &pi; &times; <i>r</i>&sup2;<br><i>L</i> = ${piStr} &times; ${r}&sup2; = ${piStr} &times; ${r * r}<br><b><i>L</i> = <span class="text-pink-400">${correct} cm&sup2;</span></b>`;
+                        diagramType = 'area';
+                        diagramParams = { r };
+                    }
+
+                } else if (diff === 'Sedang') {
+                    const subType = Math.floor(Math.random() * 3);
+                    if (subType === 0) {
+                        const areaVal = Math.round(piVal * r * r * 100) / 100;
+                        correct = r;
+                        text = `🟡 <b>[SEDANG]</b> Diketahui <b>Luas (<i>L</i>)</b> lingkaran adalah <b>${areaVal} cm&sup2;</b>. Berapakah <b>Jari-jari (<i>r</i>)</b> lingkaran tersebut? (&pi; = ${piStr})`;
+                        hint = `<i>r</i> = &radic;(<i>L</i> / &pi;) = &radic;(${areaVal} / ${piStr})`;
+                        breakdown = `<b>Rumus:</b> <i>r</i> = &radic;(<i>L</i> / &pi;)<br><i>r</i> = &radic;(${areaVal} / ${piStr})<br><i>r</i> = &radic;(${r * r}) = <b class="text-teal-400">${r} cm</b>`;
+                        diagramType = 'area';
+                        diagramParams = { r };
+                    } else if (subType === 1) {
+                        const halfArea = Math.round((0.5 * piVal * r * r) * 100) / 100;
+                        correct = halfArea;
+                        text = `🟡 <b>[SEDANG]</b> Berapakah <b>Luas Setengah (&frac12;) Lingkaran</b> dengan jari-jari <i>r</i> = <b>${r} cm</b>? (&pi; = ${piStr})`;
+                        hint = `<i>L</i> = &frac12; &times; &pi; &times; <i>r</i>&sup2;`;
+                        breakdown = `<b>Rumus:</b> <i>L</i> = &frac12; &times; &pi; &times; <i>r</i>&sup2;<br><i>L</i> = &frac12; &times; ${piStr} &times; ${r}&sup2;<br><b><i>L</i> = <span class="text-pink-400">${correct} cm&sup2;</span></b>`;
+                        diagramType = 'fraction';
+                        diagramParams = { r, fraction: 0.5 };
+                    } else {
+                        const qtrArea = Math.round((0.25 * piVal * r * r) * 100) / 100;
+                        correct = qtrArea;
+                        text = `🟡 <b>[SEDANG]</b> Berapakah <b>Luas Seperempat (&frac14;) Lingkaran</b> dengan jari-jari <i>r</i> = <b>${r} cm</b>? (&pi; = ${piStr})`;
+                        hint = `<i>L</i> = &frac14; &times; &pi; &times; <i>r</i>&sup2;`;
+                        breakdown = `<b>Rumus:</b> <i>L</i> = &frac14; &times; &pi; &times; <i>r</i>&sup2;<br><i>L</i> = &frac14; &times; ${piStr} &times; ${r}&sup2;<br><b><i>L</i> = <span class="text-pink-400">${correct} cm&sup2;</span></b>`;
+                        diagramType = 'fraction';
+                        diagramParams = { r, fraction: 0.25 };
+                    }
+
+                } else {
+                    const subType = Math.floor(Math.random() * 3);
+                    if (subType === 0) {
+                        const r1 = 7, r2 = 14;
+                        const l1 = Math.round((22/7) * r1 * r1);
+                        const l2 = Math.round((22/7) * r2 * r2);
+                        correct = l2 - l1;
+                        text = `🔥 <b>[HOTS - CINCIN]</b> Dua lingkaran sepusat memiliki <i>r</i><sub>1</sub> = <b>${r1} cm</b> dan <i>r</i><sub>2</sub> = <b>${r2} cm</b>. Berapakah <b>Luas daerah arsir</b> di antara keduanya? (&pi; = 22/7)`;
+                        hint = `<i>L</i><sub>arsir</sub> = (&pi; &times; <i>r</i><sub>2</sub>&sup2;) - (&pi; &times; <i>r</i><sub>1</sub>&sup2;)`;
+                        breakdown = `<i>L</i><sub>luar</sub> = 22/7 &times; 14&sup2; = 616 cm&sup2;<br><i>L</i><sub>dalam</sub> = 22/7 &times; 7&sup2; = 154 cm&sup2;<br><b><i>L</i><sub>arsir</sub> = 616 - 154 = <span class="text-pink-400">${correct} cm&sup2;</span></b>`;
+                        diagramType = 'ring';
+                        diagramParams = { r1, r2 };
+                    } else if (subType === 1) {
+                        const rWheel = 21, rotations = 100;
+                        const circWheel = Math.round(2 * (22/7) * rWheel);
+                        correct = Math.round((circWheel * rotations) / 100);
+                        text = `🔥 <b>[HOTS - RODA]</b> Roda sepeda dengan jari-jari <i>r</i> = <b>${rWheel} cm</b> berputar sebanyak <b>${rotations} kali</b>. Berapakah <b>Jarak total</b> (dalam meter)? (&pi; = 22/7)`;
+                        hint = `Jarak = (2 &times; &pi; &times; <i>r</i>) &times; Putaran`;
+                        breakdown = `<i>K</i><sub>roda</sub> = 2 &times; 22/7 &times; 21 = 132 cm<br>Total = 132 cm &times; 100 = 13.200 cm = <b class="text-teal-400">${correct} m</b>`;
+                        diagramType = 'wheel';
+                        diagramParams = { r: rWheel };
+                    } else {
+                        const rGarden = 14;
+                        correct = Math.round(0.75 * (22/7) * rGarden * rGarden);
+                        text = `🔥 <b>[HOTS - TAMAN]</b> Taman berbentuk <b>&frac34; Lingkaran</b> memiliki jari-jari <i>r</i> = <b>${rGarden} m</b>. Berapakah <b>Luas taman</b> tersebut? (&pi; = 22/7)`;
+                        hint = `<i>L</i><sub>taman</sub> = &frac34; &times; &pi; &times; <i>r</i>&sup2;`;
+                        breakdown = `<i>L</i><sub>full</sub> = 22/7 &times; 14&sup2; = 616 m&sup2;<br><b><i>L</i><sub>taman</sub> = &frac34; &times; 616 = <span class="text-pink-400">${correct} m&sup2;</span></b>`;
+                        diagramType = 'fraction';
+                        diagramParams = { r: rGarden, fraction: 0.75 };
+                    }
+                }
+
+                options = [correct];
+                while (options.length < 4) {
+                    let delta = (Math.floor(Math.random() * 4) + 1) * (correct > 100 ? 14 : 2);
+                    let wrongOption = Math.max(1, Math.round((correct + (Math.random() < 0.5 ? delta : -delta)) * 100) / 100);
+                    if (!options.includes(wrongOption)) options.push(wrongOption);
+                }
+                options.sort(() => Math.random() - 0.5);
+
+                return { difficulty: diff, text, hint, breakdown, correct, options, diagramType, diagramParams };
+            }
+        };
+
+        /* ==========================================================================
+           CANVAS DIAGRAM DRAWING ENGINE FOR QUIZ MODAL
+           ========================================================================== */
+        function drawQuizDiagram(canvasId, quiz) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            const cx = w / 2;
+            const cy = h / 2;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Grid background
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < w; i += 20) {
+                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke();
+            }
+
+            const type = quiz.diagramType;
+            const params = quiz.diagramParams || {};
+
+            if (type === 'radius' || type === 'area') {
+                const r = 55;
+                if (type === 'area') {
+                    ctx.fillStyle = 'rgba(255, 0, 127, 0.25)';
+                    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+                }
+                ctx.strokeStyle = '#00ffcc';
+                ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+
+                ctx.strokeStyle = '#ff007f';
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + r, cy); ctx.stroke();
+
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
+
+                ctx.fillStyle = '#00ffcc';
+                ctx.font = 'bold 12px Fredoka';
+                ctx.fillText(`r = ${params.r || 7}`, cx + 15, cy - 8);
+
+            } else if (type === 'fraction') {
+                const r = 55;
+                const frac = params.fraction || 0.5;
+                const endAngle = Math.PI * 2 * frac;
+
+                ctx.fillStyle = 'rgba(0, 242, 254, 0.3)';
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, r, 0, endAngle);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.strokeStyle = '#00a2ff';
+                ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
+
+            } else if (type === 'ring') {
+                const r1 = 30, r2 = 60;
+                ctx.fillStyle = 'rgba(255, 0, 127, 0.35)';
+                ctx.beginPath(); ctx.arc(cx, cy, r2, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath(); ctx.arc(cx, cy, r1, 0, Math.PI * 2); ctx.fill();
+
+                ctx.strokeStyle = '#00ffcc'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(cx, cy, r2, 0, Math.PI * 2); ctx.stroke();
+                ctx.strokeStyle = '#ff007f';
+                ctx.beginPath(); ctx.arc(cx, cy, r1, 0, Math.PI * 2); ctx.stroke();
+
+            } else if (type === 'wheel') {
+                const r = 55;
+                ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill();
+
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.lineWidth = 1.5;
+                for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+                    ctx.beginPath(); ctx.moveTo(cx, cy);
+                    ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        /* ==========================================================================
+           QUIZ & SOLUTION MODAL HANDLERS
+           ========================================================================== */
+        function triggerMathQuiz(callback) {
+            currentQuiz = CircleMathEngine.generateQuestion();
+            onQuizComplete = callback;
+
+            const modal = document.getElementById('math-modal');
+            const qText = document.getElementById('modal-question-text');
+            const hintBox = document.getElementById('modal-hint-box');
+            const hintText = document.getElementById('modal-hint-text');
+            const grid = document.getElementById('modal-options-grid');
+            const timerEl = document.getElementById('modal-timer');
+            const diffBadge = document.getElementById('modal-diff-badge');
+            const rewardBadge = document.getElementById('modal-reward-badge');
+
+            if (hintBox) hintBox.classList.add('hidden');
+            if (qText) qText.innerHTML = currentQuiz.text;
+            if (hintText) hintText.innerHTML = currentQuiz.hint;
+
+            if (diffBadge) {
+                if (currentQuiz.difficulty === 'Mudah') {
+                    diffBadge.className = "px-2.5 py-0.5 rounded-lg text-xs font-tech font-bold uppercase bg-emerald-950 text-emerald-300 border border-emerald-500/40";
+                    diffBadge.innerText = "🟢 MUDAH";
+                    if (rewardBadge) rewardBadge.innerText = "+15 XP";
+                } else if (currentQuiz.difficulty === 'Sedang') {
+                    diffBadge.className = "px-2.5 py-0.5 rounded-lg text-xs font-tech font-bold uppercase bg-amber-950 text-amber-300 border border-amber-500/40";
+                    diffBadge.innerText = "🟡 SEDANG";
+                    if (rewardBadge) rewardBadge.innerText = "+25 XP";
+                } else {
+                    diffBadge.className = "px-2.5 py-0.5 rounded-lg text-xs font-tech font-bold uppercase bg-rose-950 text-pink-300 border border-rose-500/40 animate-pulse";
+                    diffBadge.innerText = "🔥 HOTS";
+                    if (rewardBadge) rewardBadge.innerText = "+45 XP, +25 KOIN";
+                }
+            }
+
+            drawQuizDiagram('quiz-diagram-canvas', currentQuiz);
+
+            if (grid) {
+                grid.innerHTML = '';
+                currentQuiz.options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-roblox bg-slate-800 hover:bg-cyan-600 text-slate-100 font-mono font-bold py-3 px-4 rounded-xl border border-slate-700 hover:border-cyan-400 text-sm transition';
+                    
+                    let unit = 'cm²';
+                    if (currentQuiz.text.includes('meter')) unit = 'm';
+                    else if (currentQuiz.text.includes('Keliling') || currentQuiz.text.includes('Jari-Jari') || currentQuiz.text.includes('Diameter')) unit = 'cm';
+
+                    btn.innerHTML = `${opt} ${unit}`;
+                    btn.onclick = () => submitMathAnswer(opt);
+                    grid.appendChild(btn);
+                });
+            }
+
+            let timeLeft = 30;
+            if (timerEl) timerEl.innerText = timeLeft;
+            clearInterval(quizTimerInterval);
+            quizTimerInterval = setInterval(() => {
+                timeLeft--;
+                if (timerEl) timerEl.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(quizTimerInterval);
+                    submitMathAnswer(null);
+                }
+            }, 1000);
+
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function submitMathAnswer(selectedOpt) {
+            clearInterval(quizTimerInterval);
+            const modal = document.getElementById('math-modal');
+            if (modal) modal.classList.add('hidden');
+
+            const isCorrect = (selectedOpt === currentQuiz.correct);
+            if (isCorrect) {
+                AudioSynth.play('correct');
+                addReward(currentQuiz.difficulty);
+            } else {
+                AudioSynth.play('wrong');
+            }
+
+            showSolutionModal(isCorrect);
+        }
+
+        function showMathHint() {
+            AudioSynth.play('click');
+            const hintBox = document.getElementById('modal-hint-box');
+            if (hintBox) hintBox.classList.remove('hidden');
+        }
+
+        function showSolutionModal(isCorrect) {
+            const solModal = document.getElementById('solution-modal');
+            const solText = document.getElementById('solution-text');
+            if (!solModal || !solText) return;
+
+            const header = isCorrect 
+                ? `<span class="text-emerald-400 font-bold font-tech text-sm"><i class="fa-solid fa-circle-check"></i> JAWABAN BENAR! CRITICAL HIT!</span><br>`
+                : `<span class="text-rose-400 font-bold font-tech text-sm"><i class="fa-solid fa-circle-xmark"></i> JAWABAN KURANG TEPAT</span><br>`;
+
+            solText.innerHTML = `${header}<br>${currentQuiz.breakdown}`;
+            solModal.classList.remove('hidden');
+        }
+
+        function closeSolutionModal() {
+            AudioSynth.play('click');
+            const solModal = document.getElementById('solution-modal');
+            if (solModal) solModal.classList.add('hidden');
+            if (typeof onQuizComplete === 'function') {
+                onQuizComplete();
+                onQuizComplete = null;
+            }
+        }
+
+        /* ==========================================================================
+           TOAST NOTIFICATION ENGINE
+           ========================================================================== */
+        function showToast(msg, type = 'info') {
+            const toast = document.getElementById('game-toast');
+            if (!toast) return;
+            toast.innerText = msg;
+            toast.className = `fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl shadow-xl font-bold font-tech border transition-all transform duration-300 ${
+                type === 'error' ? 'bg-rose-950/90 text-rose-200 border-rose-500' :
+                type === 'success' ? 'bg-emerald-950/90 text-emerald-200 border-emerald-500' :
+                'bg-cyan-950/90 text-cyan-200 border-cyan-500'
+            }`;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.remove('opacity-0', 'translate-y-4');
+            }, 10);
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-4');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 3000);
+        }
+
+        /* ==========================================================================
+           ROBLOX SHOP FUNCTIONALITY
+           ========================================================================== */
+        function buyShopItem(name, cost) {
+            AudioSynth.play('click');
+            if (playerState.coins >= cost) {
+                playerState.coins -= cost;
+                updatePlayerUI();
+                AudioSynth.play('correct');
+                showToast(`🎉 Berhasil membeli Skin ${name}!`, 'success');
+            } else {
+                AudioSynth.play('wrong');
+                showToast(`❌ Koin tidak cukup untuk membeli ${name}!`, 'error');
+            }
+        }
+
+        function addReward(difficulty) {
+            let xp = 15;
+            let coins = 10;
+            if (difficulty === 'Sedang') { xp = 25; coins = 15; }
+            else if (difficulty === 'HOTS') { xp = 45; coins = 25; }
+
+            playerState.xp += xp;
+            playerState.coins += coins;
+
+            if (playerState.xp >= playerState.xpMax) {
+                playerState.level += 1;
+                playerState.xp -= playerState.xpMax;
+                playerState.xpMax = Math.round(playerState.xpMax * 1.3);
+            }
+
+            updatePlayerUI();
+        }
+
+        function updatePlayerUI() {
+            const lvlEl = document.getElementById('player-level');
+            const xpBar = document.getElementById('player-xp-bar');
+            const coinsEl = document.getElementById('player-coins');
+            const hsEl = document.getElementById('player-highscore');
+
+            if (lvlEl) lvlEl.innerText = playerState.level;
+            if (xpBar) xpBar.style.width = `${Math.min(100, (playerState.xp / playerState.xpMax) * 100)}%`;
+            if (coinsEl) coinsEl.innerText = playerState.coins;
+            if (hsEl) hsEl.innerText = playerState.highscore;
+        }
+
+        /* ==========================================================================
+           LABORATORY CANVAS & STEP ENGINE
+           ========================================================================== */
+        function toggleLabView(view) {
+            AudioSynth.play('click');
+            labViewMode = view;
+            ['btn-toggle-r', 'btn-toggle-d', 'btn-toggle-a'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    btn.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700";
+                }
+            });
+
+            if (view === 'radius') {
+                document.getElementById('btn-toggle-r').className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-teal-600 text-white border border-teal-400";
+            } else if (view === 'diameter') {
+                document.getElementById('btn-toggle-d').className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-600 text-white border border-cyan-400";
+            } else if (view === 'area') {
+                document.getElementById('btn-toggle-a').className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-pink-600 text-white border border-pink-400";
+            }
+
+            drawLabCanvas();
+        }
+
+        function drawLabCanvas() {
+            const canvas = document.getElementById('lab-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const rVal = parseInt(document.getElementById('lab-radius-slider')?.value || 7);
+
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+
+            const w = canvas.width;
+            const h = canvas.height;
+            const cx = w / 2;
+            const cy = h / 2;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Grid background
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < w; x += 25) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+            }
+            for (let y = 0; y < h; y += 25) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+            }
+
+            const scaleRadius = Math.min(w, h) * 0.38 * (rVal / 42);
+
+            if (labViewMode === 'area') {
+                ctx.fillStyle = 'rgba(255, 0, 127, 0.3)';
+                ctx.beginPath(); ctx.arc(cx, cy, scaleRadius, 0, Math.PI * 2); ctx.fill();
+            }
+
+            ctx.strokeStyle = '#00ffcc';
+            ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.arc(cx, cy, scaleRadius, 0, Math.PI * 2); ctx.stroke();
+
+            if (labViewMode === 'radius') {
+                ctx.strokeStyle = '#00ffcc';
+                ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + scaleRadius, cy); ctx.stroke();
+            } else if (labViewMode === 'diameter') {
+                ctx.strokeStyle = '#00a2ff';
+                ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(cx - scaleRadius, cy); ctx.lineTo(cx + scaleRadius, cy); ctx.stroke();
+            }
+
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill();
+        }
+
+        function updateLabCalculations() {
+            const rSlider = document.getElementById('lab-radius-slider');
+            if (!rSlider) return;
+            const r = parseFloat(rSlider.value);
+            const d = r * 2;
+            const isFrac = (r % 7 === 0 || r === 3.5);
+            const piVal = isFrac ? (22 / 7) : 3.14;
+            const piStr = isFrac ? "22/7" : "3.14";
+
+            const area = Math.round(piVal * r * r * 100) / 100;
+            const circ = Math.round(2 * piVal * r * 100) / 100;
+
+            document.getElementById('lab-radius-val').innerText = `${r} cm`;
+            document.getElementById('lab-diameter-val').innerText = `${d} cm`;
+            document.getElementById('lab-pi-badge').innerText = `&pi; = ${piStr}`;
+
+            document.getElementById('calc-step-area').innerHTML = `
+                <i>L</i> = &pi; &times; <i>r</i>&sup2;<br>
+                <i>L</i> = ${piStr} &times; ${r}&sup2;<br>
+                <i>L</i> = ${piStr} &times; ${r * r}<br>
+                <b><i>L</i> = <span class="text-pink-400 font-bold">${area} cm&sup2;</span></b>
+            `;
+
+            document.getElementById('calc-step-circ').innerHTML = `
+                <i>K</i> = 2 &times; &pi; &times; <i>r</i><br>
+                <i>K</i> = 2 &times; ${piStr} &times; ${r}<br>
+                <b><i>K</i> = <span class="text-amber-400 font-bold">${circ} cm</span></b>
+            `;
+
+            document.getElementById('calc-step-inverse').innerHTML = `
+                <i>r</i> = &radic;(<i>L</i> / &pi;)<br>
+                <i>r</i> = &radic;(${area} / ${piStr})<br>
+                <i>r</i> = &radic;(${r * r})<br>
+                <b><i>r</i> = <span class="text-teal-400 font-bold">${r} cm</span></b>
+            `;
+        }
+
+        /* ==========================================================================
+           ROBLOX CHESS 6X6 ENGINE WITH COLLISION VALIDATION
+           ========================================================================== */
+        const ChessGame = {
+            board: [],
+            selectedPiece: null,
+            validMoves: [],
+            turn: 'player', // 'player' or 'ai'
+
+            init() {
+                // Initialize 6x6 Board Layout
+                // Player: Blue (Bottom), AI: Red (Top)
+                this.board = [
+                    ['r_rook', 'r_knight', 'r_king', 'r_bishop', 'r_knight', 'r_rook'],
+                    ['r_pawn', 'r_pawn', 'r_pawn', 'r_pawn', 'r_pawn', 'r_pawn'],
+                    [null, null, null, null, null, null],
+                    [null, null, null, null, null, null],
+                    ['p_pawn', 'p_pawn', 'p_pawn', 'p_pawn', 'p_pawn', 'p_pawn'],
+                    ['p_rook', 'p_knight', 'p_king', 'p_bishop', 'p_knight', 'p_rook']
+                ];
+                this.selectedPiece = null;
+                this.validMoves = [];
+                this.turn = 'player';
+                this.render();
+            },
+
+            reset() {
+                this.init();
+                showToast("⚡ Game Catur 6x6 direset!", "info");
+            },
+
+            render() {
+                const boardEl = document.getElementById('chess-board');
+                if (!boardEl) return;
+                boardEl.innerHTML = '';
+
+                const pieceIcons = {
+                    'p_pawn': '♟', 'p_knight': '♞', 'p_bishop': '♝', 'p_rook': '♜', 'p_king': '♚',
+                    'r_pawn': '♟', 'r_knight': '♞', 'r_bishop': '♝', 'r_rook': '♜', 'r_king': '♚'
+                };
+
+                for (let r = 0; r < 6; r++) {
+                    for (let c = 0; c < 6; c++) {
+                        const cell = document.createElement('div');
+                        const isDark = (r + c) % 2 === 1;
+                        const piece = this.board[r][c];
+
+                        const isSelected = this.selectedPiece && this.selectedPiece.r === r && this.selectedPiece.c === c;
+                        const isValidMove = this.validMoves.some(m => m.r === r && m.c === c);
+
+                        cell.className = `w-full h-full flex items-center justify-center text-2xl font-bold cursor-pointer transition-all relative ${
+                            isSelected ? 'bg-amber-500/50 border-2 border-amber-400' :
+                            isValidMove ? 'bg-emerald-500/40 border-2 border-emerald-400 animate-pulse' :
+                            isDark ? 'bg-slate-900' : 'bg-slate-800'
+                        }`;
+
+                        if (piece) {
+                            const isPlayer = piece.startsWith('p_');
+                            const span = document.createElement('span');
+                            span.innerText = pieceIcons[piece] || '♟';
+                            span.className = isPlayer ? 'text-cyan-400 filter drop-shadow-[0_0_8px_rgba(0,255,204,0.8)]' : 'text-rose-500 filter drop-shadow-[0_0_8px_rgba(255,0,127,0.8)]';
+                            cell.appendChild(span);
+                        }
+
+                        cell.onclick = () => this.handleSquareClick(r, c);
+                        boardEl.appendChild(cell);
+                    }
+                }
+
+                const infoEl = document.getElementById('chess-selected-info');
+                if (infoEl) {
+                    if (this.selectedPiece) {
+                        infoEl.innerText = `Bidak terpilih: [R:${this.selectedPiece.r+1}, C:${this.selectedPiece.c+1}]`;
+                    } else {
+                        infoEl.innerText = "Pilih bidak biru untuk melangkah";
+                    }
+                }
+            },
+
+            handleSquareClick(r, c) {
+                if (this.turn !== 'player') return;
+
+                const clickedPiece = this.board[r][c];
+
+                // Case 1: Select Player's own piece
+                if (clickedPiece && clickedPiece.startsWith('p_')) {
+                    AudioSynth.play('click');
+                    this.selectedPiece = { r, c, type: clickedPiece };
+                    this.validMoves = this.calculateValidMoves(r, c, clickedPiece);
+                    this.render();
+                    return;
+                }
+
+                // Case 2: Click valid target square
+                if (this.selectedPiece && this.validMoves.some(m => m.r === r && m.c === c)) {
+                    const targetR = r;
+                    const targetC = c;
+                    const fromR = this.selectedPiece.r;
+                    const fromC = this.selectedPiece.c;
+                    const pType = this.selectedPiece.type;
+
+                    // Trigger Math Quiz for Move Validation
+                    triggerMathQuiz(() => {
+                        // On Quiz Success or Attempt Complete
+                        this.board[targetR][targetC] = pType;
+                        this.board[fromR][fromC] = null;
+                        this.selectedPiece = null;
+                        this.validMoves = [];
+                        this.turn = 'ai';
+                        this.render();
+
+                        // Check Win Condition
+                        if (!this.hasKing('r')) {
+                            showToast("👑 SELAMAT! Anda Memenangkan Catur Geometri!", "success");
+                            addReward('HOTS');
+                            this.reset();
+                            return;
+                        }
+
+                        // AI Turn delayed
+                        setTimeout(() => this.makeAiMove(), 1000);
+                    });
+                }
+            },
+
+            calculateValidMoves(r, c, type) {
+                const moves = [];
+                const pName = type.split('_')[1];
+
+                if (pName === 'pawn') {
+                    // Forward 1 step
+                    if (r - 1 >= 0 && !this.board[r - 1][c]) {
+                        moves.push({ r: r - 1, c });
+                    }
+                    // Diagonal captures
+                    [-1, 1].forEach(dc => {
+                        if (r - 1 >= 0 && c + dc >= 0 && c + dc < 6) {
+                            const target = this.board[r - 1][c + dc];
+                            if (target && target.startsWith('r_')) moves.push({ r: r - 1, c: c + dc });
+                        }
+                    });
+                } else if (pName === 'knight') {
+                    // L-Shape Jumps
+                    const offsets = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+                    offsets.forEach(([dr, dc]) => {
+                        const nr = r + dr, nc = c + dc;
+                        if (nr >= 0 && nr < 6 && nc >= 0 && nc < 6) {
+                            const t = this.board[nr][nc];
+                            if (!t || t.startsWith('r_')) moves.push({ r: nr, c: nc });
+                        }
+                    });
+                } else if (pName === 'bishop') {
+                    // Diagonals with path clear check
+                    const dirs = [[-1,-1],[-1,1],[1,-1],[1,1]];
+                    dirs.forEach(([dr, dc]) => {
+                        let nr = r + dr, nc = c + dc;
+                        while (nr >= 0 && nr < 6 && nc >= 0 && nc < 6) {
+                            const t = this.board[nr][nc];
+                            if (!t) {
+                                moves.push({ r: nr, c: nc });
+                            } else {
+                                if (t.startsWith('r_')) moves.push({ r: nr, c: nc });
+                                break; // Path blocked!
+                            }
+                            nr += dr; nc += dc;
+                        }
+                    });
+                } else if (pName === 'rook') {
+                    // Straight lines with path clear check
+                    const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+                    dirs.forEach(([dr, dc]) => {
+                        let nr = r + dr, nc = c + dc;
+                        while (nr >= 0 && nr < 6 && nc >= 0 && nc < 6) {
+                            const t = this.board[nr][nc];
+                            if (!t) {
+                                moves.push({ r: nr, c: nc });
+                            } else {
+                                if (t.startsWith('r_')) moves.push({ r: nr, c: nc });
+                                break; // Path blocked!
+                            }
+                            nr += dr; nc += dc;
+                        }
+                    });
+                } else if (pName === 'king') {
+                    // 1 step all directions
+                    for (let dr = -1; dr <= 1; dr++) {
+                        for (let dc = -1; dc <= 1; dc++) {
+                            if (dr === 0 && dc === 0) continue;
+                            const nr = r + dr, nc = c + dc;
+                            if (nr >= 0 && nr < 6 && nc >= 0 && nc < 6) {
+                                const t = this.board[nr][nc];
+                                if (!t || t.startsWith('r_')) moves.push({ r: nr, c: nc });
+                            }
+                        }
+                    }
+                }
+
+                return moves;
+            },
+
+            makeAiMove() {
+                const allAiMoves = [];
+                for (let r = 0; r < 6; r++) {
+                    for (let c = 0; c < 6; c++) {
+                        const p = this.board[r][c];
+                        if (p && p.startsWith('r_')) {
+                            // Generate valid AI moves
+                            const valid = this.calculateAiValidMoves(r, c, p);
+                            valid.forEach(m => allAiMoves.push({ fromR: r, fromC: c, toR: m.r, toC: m.c, p }));
+                        }
+                    }
+                }
+
+                if (allAiMoves.length > 0) {
+                    const chosen = allAiMoves[Math.floor(Math.random() * allAiMoves.length)];
+                    this.board[chosen.toR][chosen.toC] = chosen.p;
+                    this.board[chosen.fromR][chosen.fromC] = null;
+                }
+
+                this.turn = 'player';
+                this.render();
+
+                if (!this.hasKing('p')) {
+                    showToast("💥 AI Memenangkan Permainan Catur!", "error");
+                    this.reset();
+                }
+            },
+
+            calculateAiValidMoves(r, c, type) {
+                const moves = [];
+                const pName = type.split('_')[1];
+                if (pName === 'pawn') {
+                    if (r + 1 < 6 && !this.board[r + 1][c]) moves.push({ r: r + 1, c });
+                    [-1, 1].forEach(dc => {
+                        if (r + 1 < 6 && c + dc >= 0 && c + dc < 6) {
+                            const t = this.board[r + 1][c + dc];
+                            if (t && t.startsWith('p_')) moves.push({ r: r + 1, c: c + dc });
+                        }
+                    });
+                } else if (pName === 'knight') {
+                    const offsets = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+                    offsets.forEach(([dr, dc]) => {
+                        const nr = r + dr, nc = c + dc;
+                        if (nr >= 0 && nr < 6 && nc >= 0 && nc < 6) {
+                            const t = this.board[nr][nc];
+                            if (!t || t.startsWith('p_')) moves.push({ r: nr, c: nc });
+                        }
+                    });
+                } else {
+                    for (let dr = -1; dr <= 1; dr++) {
+                        for (let dc = -1; dc <= 1; dc++) {
+                            if (dr === 0 && dc === 0) continue;
+                            const nr = r + dr, nc = c + dc;
+                            if (nr >= 0 && nr < 6 && nc >= 0 && nc < 6) {
+                                const t = this.board[nr][nc];
+                                if (!t || t.startsWith('p_')) moves.push({ r: nr, c: nc });
+                            }
+                        }
+                    }
+                }
+                return moves;
+            },
+
+            hasKing(prefix) {
+                for (let r = 0; r < 6; r++) {
+                    for (let c = 0; c < 6; c++) {
+                        if (this.board[r][c] === `${prefix}_king`) return true;
+                    }
+                }
+                return false;
+            }
+        };
+
+        /* ==========================================================================
+           ROBLOX SPEED RUSH ENGINE (WITH 3 HEARTS & DYNAMIC CANVAS)
+           ========================================================================== */
+        let speedRushState = {
+            active: false,
+            score: 0,
+            lives: 3,
+            circleRadius: 15,
+            currentQuestion: null,
+            animId: null
+        };
+
+        function renderSpeedQuestion() {
+            speedRushState.currentQuestion = CircleMathEngine.generateQuestion();
+            const qText = document.getElementById('speed-question-text');
+            const grid = document.getElementById('speed-options-grid');
+            if (qText) qText.innerHTML = speedRushState.currentQuestion.text;
+            if (grid) {
+                grid.innerHTML = '';
+                speedRushState.currentQuestion.options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-roblox bg-slate-800 hover:bg-cyan-600 text-slate-100 font-mono font-bold py-3 px-4 rounded-xl border border-slate-700 hover:border-cyan-400 text-sm transition';
+                    let unit = 'cm²';
+                    if (speedRushState.currentQuestion.text.includes('meter')) unit = 'm';
+                    else if (speedRushState.currentQuestion.text.includes('Keliling') || speedRushState.currentQuestion.text.includes('Jari-Jari') || speedRushState.currentQuestion.text.includes('Diameter')) unit = 'cm';
+                    btn.innerHTML = `${opt} ${unit}`;
+                    btn.onclick = () => checkSpeedAnswer(opt);
+                    grid.appendChild(btn);
+                });
+            }
+        }
+
+        function startSpeedRush() {
+            speedRushState.active = true;
+            speedRushState.score = 0;
+            speedRushState.lives = 3;
+            speedRushState.circleRadius = 15;
+            updateSpeedRushUI();
+            renderSpeedQuestion();
+            speedRushLoop();
+        }
+
+        function stopSpeedRush() {
+            speedRushState.active = false;
+            if (speedRushState.animId) cancelAnimationFrame(speedRushState.animId);
+        }
+
+        function speedRushLoop() {
+            if (!speedRushState.active) return;
+
+            const canvas = document.getElementById('speed-canvas');
+            if (canvas) {
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+                const ctx = canvas.getContext('2d');
+                const cx = canvas.width / 2;
+                const cy = canvas.height / 2;
+                const maxR = Math.min(canvas.width, canvas.height) * 0.45;
+
+                speedRushState.circleRadius += 0.05; // Slow, smooth expansion
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = 'rgba(255, 0, 127, 0.2)';
+                ctx.beginPath(); ctx.arc(cx, cy, speedRushState.circleRadius, 0, Math.PI * 2); ctx.fill();
+
+                ctx.strokeStyle = '#ff007f'; ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.arc(cx, cy, speedRushState.circleRadius, 0, Math.PI * 2); ctx.stroke();
+
+                if (speedRushState.circleRadius >= maxR) {
+                    AudioSynth.play('wrong');
+                    speedRushState.lives -= 1;
+                    updateSpeedRushUI();
+
+                    if (speedRushState.lives <= 0) {
+                        stopSpeedRush();
+                        showToast(`💥 GAME OVER! Skor Speed Rush: ${speedRushState.score}`, 'error');
+                        return;
+                    } else {
+                        showToast(`💥 Waktu habis! Nyawa berkurang!`, 'error');
+                        speedRushState.circleRadius = 15;
+                        renderSpeedQuestion();
+                    }
+                }
+            }
+
+            speedRushState.animId = requestAnimationFrame(speedRushLoop);
+        }
+
+        function checkSpeedAnswer(opt) {
+            if (!speedRushState.active) return;
+
+            if (opt === speedRushState.currentQuestion.correct) {
+                AudioSynth.play('correct');
+                speedRushState.score += 10;
+                playerState.highscore = Math.max(playerState.highscore, speedRushState.score);
+                addReward(speedRushState.currentQuestion.difficulty);
+                updateSpeedRushUI();
+                speedRushState.circleRadius = 15;
+                renderSpeedQuestion();
+            } else {
+                AudioSynth.play('wrong');
+                speedRushState.lives -= 1;
+                updateSpeedRushUI();
+                if (speedRushState.lives <= 0) {
+                    stopSpeedRush();
+                    showToast(`💥 GAME OVER! Skor Akhir: ${speedRushState.score}`, 'error');
+                } else {
+                    showToast(`❌ Jawaban kurang tepat!`, 'error');
+                    speedRushState.circleRadius = 15;
+                    renderSpeedQuestion();
+                }
+            }
+        }
+
+        function updateSpeedRushUI() {
+            const scoreEl = document.getElementById('speed-score');
+            const heartsEl = document.getElementById('speed-hearts');
+            if (scoreEl) scoreEl.innerText = speedRushState.score;
+            if (heartsEl) {
+                let hStr = '';
+                for (let i = 0; i < 3; i++) {
+                    hStr += i < speedRushState.lives ? '❤️ ' : '🖤 ';
+                }
+                heartsEl.innerText = hStr;
+            }
+        }
+
+        /* ==========================================================================
+           INITIALIZATION & EVENT LISTENERS
+           ========================================================================== */
+        function renderKaTeXFormulas() {
+            try {
+                if (typeof renderMathInElement === 'function') {
+                    renderMathInElement(document.body, {
+                        delimiters: [
+                            { left: '$$', right: '$$', display: true },
+                            { left: '$', right: '$', display: false }
+                        ],
+                        throwOnError: false
+                    });
+                }
+            } catch (err) {
+                console.warn("KaTeX rendering fallback activated:", err);
+            }
+        }
+
+        window.onload = function() {
+            renderKaTeXFormulas();
+
+            const rSlider = document.getElementById('lab-radius-slider');
+            if (rSlider) {
+                rSlider.oninput = function() {
+                    drawLabCanvas();
+                    updateLabCalculations();
+                };
+            }
+
+            const customR = document.getElementById('custom-r-input');
+            if (customR) {
+                customR.oninput = function() {
+                    const val = Math.max(1, Math.min(42, parseFloat(this.value) || 7));
+                    if (rSlider) rSlider.value = val;
+                    drawLabCanvas();
+                    updateLabCalculations();
+                };
+            }
+
+            const customL = document.getElementById('custom-l-input');
+            if (customL) {
+                customL.oninput = function() {
+                    const L = parseFloat(this.value);
+                    if (L > 0) {
+                        const piVal = (L % 154 === 0 || L % 38.5 === 0) ? (22/7) : 3.14;
+                        const r = Math.round(Math.sqrt(L / piVal) * 10) / 10;
+                        if (r > 0 && r <= 42) {
+                            if (rSlider) rSlider.value = r;
+                            drawLabCanvas();
+                            updateLabCalculations();
+                        }
+                    }
+                };
+            }
+
+            updatePlayerUI();
+            drawLabCanvas();
+            updateLabCalculations();
+            ChessGame.init();
+        };
+    </script>
+</body>
+</html>
